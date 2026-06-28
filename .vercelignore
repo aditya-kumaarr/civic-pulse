@@ -1,0 +1,6 @@
+civic-pulse
+.data
+.env.local
+node_modules
+.next
+civic-pulse.zip
