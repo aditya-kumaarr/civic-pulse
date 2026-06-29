@@ -1,74 +1,111 @@
-# CivicPulse
+<div align="center">
 
-Hyperlocal civic-issue reporter. Snap a photo of a neighbourhood problem — a pothole, a broken streetlight, an overflowing bin — and AI instantly categorises it, estimates severity, and drops it on a live map. The community verifies reports, and authorities track them from **Reported → Verified → In Progress → Resolved**.
+# 🛰️ CivicPulse
 
-Built with **Next.js (App Router)**, **React 19**, **Tailwind CSS v4**, **Leaflet** (map), and **Recharts** (dashboard).
+### Snap a photo. AI maps the problem. Your community fixes it.
 
-## Features
+CivicPulse turns a single photo into an actionable, geolocated, community‑verified civic complaint — AI categorises it, scores its severity, routes it to the right department, and drops it on a live map.
 
-- **AI categorisation** — photo + optional note are classified into a category, department, severity (1–5), and a suggested title. Uses a real vision model when an API key is set (Mistral or OpenAI GPT-4o), and falls back to a deterministic on-device classifier so the app always works with zero config. Local uploads are inlined as base64 so the vision model can read them.
-- **Live map** (`/`) — every active report as a category-coloured marker, with a searchable side list.
-- **Report flow** (`/report`) — guided Photo → AI → Review → Done flow with live geolocation and duplicate detection.
-- **Issue detail** (`/issues/[id]`) — community confirm/deny voting (drives a trust score), status timeline, comments, and demo authority actions.
-- **Issues list** (`/issues`) — filter by status, category, and ward.
-- **Impact dashboard** (`/dashboard`) — KPIs, reports-vs-resolutions trend, status breakdown, category mix, a contributor leaderboard, and AI-flagged predictive hotspots.
+[![Next.js](https://img.shields.io/badge/Next.js%2016-000000?logo=next.js&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React%2019-149ECA?logo=react&logoColor=white)](https://react.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Mistral AI](https://img.shields.io/badge/Mistral%20Vision-FA520F?logo=mistralai&logoColor=white)](https://mistral.ai)
+[![Google Cloud Run](https://img.shields.io/badge/Google%20Cloud%20Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
 
-## Getting started
+**[🌐 Live App](https://civic-pulse-mlk53ngtxq-el.a.run.app)** · built for the **Vibe2Ship Hackathon**
+
+</div>
+
+---
+
+## 📸 What it recognises from a photo
+
+CivicPulse's vision model identifies civic issues like these and assigns each a category, department and severity:
+
+<table>
+  <tr>
+    <td align="center"><img src="public/img/pothole.jpg" width="150" height="100" style="object-fit:cover"><br><sub>🕳️ Pothole</sub></td>
+    <td align="center"><img src="public/img/garbage.jpg" width="150" height="100"><br><sub>🗑️ Garbage</sub></td>
+    <td align="center"><img src="public/img/electric.jpg" width="150" height="100"><br><sub>⚡ Electrical hazard</sub></td>
+    <td align="center"><img src="public/img/water_leak.jpg" width="150" height="100"><br><sub>🚰 Water leak</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="public/img/drainage.jpg" width="150" height="100"><br><sub>🌊 Drainage / flood</sub></td>
+    <td align="center"><img src="public/img/streetlight.jpg" width="150" height="100"><br><sub>💡 Streetlight</sub></td>
+    <td align="center"><img src="public/img/tree.jpg" width="150" height="100"><br><sub>🌳 Fallen tree</sub></td>
+    <td align="center"><img src="public/img/signage.jpg" width="150" height="100"><br><sub>🚏 Damaged sign</sub></td>
+  </tr>
+</table>
+
+> 👉 **See the real UI live:** https://civic-pulse-mlk53ngtxq-el.a.run.app
+
+---
+
+## 🧭 Why
+
+Most neighbourhood problems never get fixed because **reporting them is painful** — which department owns it? how serious is it? where exactly? has someone already reported it? People give up, and the pothole stays. CivicPulse collapses the whole process into **one action: take a photo.** Everything else — triage, routing, verification, tracking — is automated, turning a stream of complaints into transparent, measurable accountability.
+
+## ✨ Features
+
+- 📷 **Photo‑first reporting** — camera *or* gallery, with automatic geolocation
+- 🤖 **AI vision triage** — category, department, **severity (1–5)**, suggested title & summary, with confidence
+- 🗺️ **Live map** — every report as a category‑coloured marker, centred on the user
+- 🤝 **Community verification** — confirm/deny voting → **trust score** → auto‑verify at consensus
+- ⏱️ **Live SLA accountability** — per‑issue countdown and "overdue" flags
+- 📊 **Impact dashboard** — KPIs, **department SLA scorecard**, area breakdown, trends, **predictive hotspots**, activity feed
+- 📍 **Location‑aware** — city/area scoping (Indiranagar / Cyber City) with "be the first to report" empty states
+- 🏆 **Gamified** — civic points + leaderboard · 🔁 **duplicate detection** · 📱 fully responsive
+
+## 🔄 How it works
+
+```
+📷 Photo  →  🤖 AI categorises + scores + routes  →  🗺️ Live map
+                                                        ↓
+        📊 Dashboard & SLA  ←  🏛️ Authority tracks  ←  🤝 Community verifies
+```
+
+## 🧱 Tech stack
+
+| Layer | Tech |
+|---|---|
+| **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS v4, Leaflet, Recharts |
+| **AI** | Mistral vision model (`mistral-small-latest`) — with a zero‑config on‑device fallback classifier |
+| **Backend** | Supabase — Postgres + Storage (with a local file‑store fallback) |
+| **Deploy** | Google Cloud Run (Docker + Cloud Build) |
+
+A single data‑access layer (`src/lib/store.ts`) auto‑selects the **Supabase** backend when configured, or a **local file store** otherwise — so the app is both production‑real and runnable with zero setup. Uploaded photos are inlined as base64 so the AI reads *real* user images.
+
+## 🚀 Getting started
 
 ```bash
+git clone https://github.com/aditya-kumaarr/civic-pulse.git
+cd civic-pulse
 npm install
-npm run dev
+
+# optional: enable real AI + shared backend (otherwise it runs fully on mock + local store)
+cp .env.example .env.local   # then fill in the values you want
+
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Configuration is documented in [`.env.example`](.env.example) — every key is **optional**; with none set, the app runs on a deterministic mock AI and a local file store. To enable the real backend, run `supabase/schema.sql` in your Supabase SQL editor and add the keys.
 
-### Optional: enable a real vision model
+## ☁️ Deployment (Google Cloud Run)
 
-Create a `.env.local` with **one** of the following. Mistral is recommended — it has a free tier and Pixtral is a strong vision model:
+Containerised via the included multi‑stage `Dockerfile` (Next.js standalone output) and deployed with Cloud Build:
 
-```
-# Recommended (free tier): https://console.mistral.ai
-MISTRAL_API_KEY=...
-# MISTRAL_MODEL=mistral-small-latest   # optional override (vision-capable)
-
-# Or OpenAI:
-# OPENAI_API_KEY=sk-...
-# OPENAI_MODEL=gpt-4o                 # optional override
+```bash
+gcloud run deploy civic-pulse --source . --region asia-south1 --allow-unauthenticated
 ```
 
-The provider is auto-detected (Mistral preferred). Without any key, the app uses the built-in mock classifier (shown in the UI as "Smart classifier"); with a key, the badge shows "Mistral Vision" or "GPT-4o Vision".
+Secrets are injected as Cloud Run **environment variables** — never committed to the repo.
 
-## Data
+## 🔗 Links
 
-The app talks to data through one interface (`src/lib/store.ts`) with two interchangeable backends, chosen automatically at load:
+- **Live app:** https://civic-pulse-mlk53ngtxq-el.a.run.app
+- **Source:** https://github.com/aditya-kumaarr/civic-pulse
 
-- **Local (default, zero-config)** — `src/lib/store.local.ts` seeds from `src/lib/seed.ts` into an in-memory store mirrored to `.data/db.json`. Runs fully self-contained with no external services.
-- **Supabase (real, shared)** — `src/lib/store.supabase.ts`. Active whenever `SUPABASE_URL` + a secret key are present; reports from any device land in the same Postgres DB.
+---
 
-Shared logic (trust scoring, distance, dashboard stats) lives in `src/lib/store.shared.ts` so both backends behave identically.
-
-### Enable the Supabase backend
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. Run `supabase/schema.sql` in the SQL Editor (creates the tables).
-3. Add to `.env.local` (Project Settings → API):
-   ```
-   SUPABASE_URL=https://<ref>.supabase.co
-   SUPABASE_SECRET_KEY=sb_secret_...        # or legacy SUPABASE_SERVICE_ROLE_KEY=eyJ...
-   ```
-4. Restart, then seed: `curl -X POST http://localhost:3000/api/admin/reset`.
-
-`POST /api/admin/reset` reseeds the database in either backend — handy for resetting demo state (optionally guard it with `ADMIN_TOKEN`).
-
-## Project structure
-
-```
-src/
-  app/            App Router pages + API routes (/api/*)
-  components/     UI: MapView, IssuesList, IssueDetail, ReportFlow, Dashboard, Navbar
-  lib/            store, seed data, AI categoriser, categories, types, utils
-```
-
-## Design system
-
-A single set of CSS custom properties in `src/app/globals.css` (`--accent`, `--bg-canvas`, `--text`, …) drives the whole UI — a Stripe-inspired purple theme (`#4A36B3`) on a soft canvas (`#F6F9FC`).
+<div align="center"><sub>Built with ☕ for the Vibe2Ship Hackathon.</sub></div>

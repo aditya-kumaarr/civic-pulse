@@ -49,3 +49,4 @@ civic-pulse/
 civic-pulse.zip
 .vercel
 tsconfig.tsbuildinfo
+!.env.example
