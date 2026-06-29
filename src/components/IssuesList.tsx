@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { IssueCard } from "@/components/IssueCard";
 import { CATEGORIES } from "@/lib/categories";
 import type { Issue, IssueStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 const STATUS_TABS: { id: IssueStatus | "all"; label: string }[] = [
   { id: "all",         label: "All" },
@@ -15,16 +15,58 @@ const STATUS_TABS: { id: IssueStatus | "all"; label: string }[] = [
   { id: "resolved",    label: "Resolved" },
 ];
 
-export function IssuesList({ issues, wards }: { issues: Issue[]; wards: string[] }) {
-  const [tab, setTab]   = useState<IssueStatus | "all">("all");
-  const [cat, setCat]   = useState<string>("all");
-  const [ward, setWard] = useState<string>("all");
-  const [q, setQ]       = useState("");
+// Cities/areas that have reports. `id` matches the issue `ward` field.
+const CITIES = [
+  { id: "Indiranagar", label: "Indiranagar, Bengaluru", lat: 12.9719, lng: 77.6412 },
+  { id: "Gurugram", label: "Cyber City, Gurugram", lat: 28.4949, lng: 77.0869 },
+];
+
+function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLng = ((bLng - aLng) * Math.PI) / 180;
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 *
+      Math.cos((aLat * Math.PI) / 180) *
+      Math.cos((bLat * Math.PI) / 180);
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+
+export function IssuesList({ issues }: { issues: Issue[] }) {
+  const [tab, setTab] = useState<IssueStatus | "all">("all");
+  const [cat, setCat] = useState<string>("all");
+  const [city, setCity] = useState<string>(CITIES[0].id);
+  const [q, setQ] = useState("");
+
+  // Default the city to whichever covered area is nearest to the user.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        let best = CITIES[0];
+        let bestD = Infinity;
+        for (const c of CITIES) {
+          const d = distanceKm(pos.coords.latitude, pos.coords.longitude, c.lat, c.lng);
+          if (d < bestD) {
+            bestD = d;
+            best = c;
+          }
+        }
+        setCity(best.id);
+      },
+      () => {},
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }, []);
+
+  const cityLabel = CITIES.find((c) => c.id === city)?.label ?? city;
+  const cityTotal = issues.filter((i) => i.ward === city).length;
 
   const filtered = issues.filter((i) => {
+    if (i.ward !== city) return false;
     if (tab !== "all" && i.status !== tab) return false;
     if (cat !== "all" && i.category_id !== cat) return false;
-    if (ward !== "all" && i.ward !== ward) return false;
     if (q.trim()) {
       const hay = `${i.title} ${i.location_name}`.toLowerCase();
       if (!hay.includes(q.toLowerCase())) return false;
@@ -35,10 +77,10 @@ export function IssuesList({ issues, wards }: { issues: Issue[]; wards: string[]
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
-        All issues
+        Issues near you
       </h1>
       <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
-        {issues.length} reports across {wards.length} wards
+        {cityTotal} {cityTotal === 1 ? "report" : "reports"} in {cityLabel}
       </p>
 
       {/* Status tabs */}
@@ -99,8 +141,8 @@ export function IssuesList({ issues, wards }: { issues: Issue[]; wards: string[]
           ))}
         </select>
         <select
-          value={ward}
-          onChange={(e) => setWard(e.target.value)}
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
           className="rounded-xl border px-3 py-2.5 text-sm outline-none"
           style={{
             background: "var(--bg-elevated)",
@@ -108,9 +150,10 @@ export function IssuesList({ issues, wards }: { issues: Issue[]; wards: string[]
             color: "var(--text)",
           }}
         >
-          <option value="all">All wards</option>
-          {wards.map((w) => (
-            <option key={w} value={w}>{w}</option>
+          {CITIES.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>
@@ -120,14 +163,34 @@ export function IssuesList({ issues, wards }: { issues: Issue[]; wards: string[]
         {filtered.map((i) => (
           <IssueCard key={i.id} issue={i} />
         ))}
-        {filtered.length === 0 && (
-          <div
-            className="rounded-xl border border-dashed p-10 text-center text-sm"
-            style={{ borderColor: "var(--divider)", color: "var(--text-tertiary)" }}
-          >
-            No issues match these filters.
-          </div>
-        )}
+        {filtered.length === 0 &&
+          (cityTotal === 0 ? (
+            <div
+              className="rounded-xl border border-dashed p-10 text-center"
+              style={{ borderColor: "var(--divider)" }}
+            >
+              <div className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                No issues in {cityLabel} yet
+              </div>
+              <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
+                Be the first to put your neighbourhood on the map.
+              </p>
+              <Link
+                href="/report"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold text-white transition hover:brightness-95"
+                style={{ background: "var(--accent)" }}
+              >
+                <Plus className="h-3.5 w-3.5" /> Report the first issue
+              </Link>
+            </div>
+          ) : (
+            <div
+              className="rounded-xl border border-dashed p-10 text-center text-sm"
+              style={{ borderColor: "var(--divider)", color: "var(--text-tertiary)" }}
+            >
+              No issues match these filters in {cityLabel}.
+            </div>
+          ))}
       </div>
     </div>
   );
